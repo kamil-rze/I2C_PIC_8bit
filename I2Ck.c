@@ -51,17 +51,21 @@ void I2C1_Idle(){
 // Start Event
 void I2C1_Start(){
     // Generate Start Event
-    I2C1CONbits.SEN = 1;
+    //I2C1CONbits.SEN = 1;
+    SSP1CON2bits.SEN = 1;
     // wait here till SEN = 0 <- Start event competed
-    while(I2C1CONbits.SEN);
+    //while(I2C1CONbits.SEN);
+    while(SSP1CON2bits.SEN);
 }
 
 // Stop Event
 void I2C1_Stop(){
     // Generate Start Event
-    I2C1CONbits.PEN = 1;
+    //I2C1CONbits.PEN = 1;
+    SSP1CON2bits.PEN = 1;
     // wait here till SEN = 0 <- Start event competed
-    while(I2C1CONbits.PEN);
+    //while(I2C1CONbits.PEN);
+    while(SSP1CON2bits.PEN);
     //__delay_us(150);
 }
 
