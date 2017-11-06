@@ -9,7 +9,6 @@
 
 #include <xc.h>
 #include "I2Ck.h"
-//#include <libpic30.h>
 
 #define SLAVE_ADDRESS   0x50
 
