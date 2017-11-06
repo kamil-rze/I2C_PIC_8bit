@@ -32,12 +32,14 @@ To accomplish this message, the user software will sequence through the followin
 
 // Enable I2C Module
 void I2C1_Enable(){
-    I2C1CONbits.I2CEN = 1;
+    //I2C1CONbits.I2CEN = 1;
+    SSP1CON1bits.SSP1EN = 1;
 }
 
 // Disable I2C Module
 void I2C1_Disable(){
-    I2C1CONbits.I2CEN = 0;
+    //I2C1CONbits.I2CEN = 0;
+    SSP1CON1bits.SSP1EN = 0;
 }
 
 // Check if bus is idle
