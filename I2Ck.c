@@ -113,20 +113,26 @@ void I2C1_NAck(){
 // Send Data
 void I2C1_Send(unsigned char data){
     // To send byte out data needs to be copied to Transmit register
-    IFS1bits.MI2C1IF = 0;
-    I2C1TRN = data;
-    while(I2C1STATbits.TBF);
-    while(IFS1bits.MI2C1IF);    //Wait for ninth clock cycle
-    IFS1bits.MI2C1IF = 0;        //Clear interrupt flag
-    while(I2C1STATbits.ACKSTAT);
+    //IFS1bits.MI2C1IF = 0;
+    PIR1bits.SSP1IF = 0;
+    //I2C1TRN = data;
+    SSP1BUF = data;
+    //while(I2C1STATbits.TBF);
+    while(SSP1STATbits.BF);
+    //while(IFS1bits.MI2C1IF);    //Wait for ninth clock cycle
+    while(!PIR1bits.SSP1IF);
+    //IFS1bits.MI2C1IF = 0;        //Clear interrupt flag
+    PIR1bits.SSP1IF = 0;
+    //while(I2C1STATbits.ACKSTAT);
+    
 }
 
 // Receive Data
 unsigned char I2C1_Receive(){
     char result;
-    I2C1CONbits.RCEN = 1;
-    while(I2C1CONbits.RCEN);
-    return result = I2C1RCV;
+    SSP1CON2bits.RCEN = 1;
+    while(SSP1CON2bits.RCEN);
+    return result = SSP1BUF;
 }
 
 // Write Complete check
@@ -137,12 +143,12 @@ void I2C1_WriteCmpt(unsigned char sAddress){
         I2C1_Start();
         
         // To send byte out data needs to be copied to Transmit register
-        IFS1bits.MI2C1IF = 0;
-        I2C1TRN = sAddress << 1;
-        while(I2C1STATbits.TBF);
-        while(IFS1bits.MI2C1IF);    //Wait for ninth clock cycle
-        IFS1bits.MI2C1IF = 0;        //Clear interrupt flag
-        while(I2C1STATbits.ACKSTAT){
+        PIR1bits.SSP1IF = 0;
+        SSP1BUF = sAddress << 1;
+        while(SSP1STATbits.BF);
+        while(PIR1bits.SSP1IF);    //Wait for ninth clock cycle
+        PIR1bits.SSP1IF = 0;        //Clear interrupt flag
+        while(SSP1CON2bits.ACKSTAT){
             LATB++;
             if(LATB == 0x70){
                 LATB = 0x00;
@@ -151,7 +157,7 @@ void I2C1_WriteCmpt(unsigned char sAddress){
         }
         I2C1_Idle();
         I2C1_Stop();
-        if(I2C1STATbits.ACKSTAT == 0){
+        if(SSP1CON2bits.ACKSTAT == 0){
             I2C1_Idle();
             I2C1_Stop();
             break;
