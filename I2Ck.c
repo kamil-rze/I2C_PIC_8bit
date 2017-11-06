@@ -42,6 +42,8 @@ void I2C1_Disable(){
     SSP1CON1bits.SSP1EN = 0;
 }
 
+
+// 1. transmit in progres; 2. Test SSP1CON2 & 0x1F for zero.
 // Check if bus is idle
 void I2C1_Idle(){
     // Wait till bus is idle P = 1
@@ -72,25 +74,33 @@ void I2C1_Stop(){
 // Restart Event
 void I2C1_Restart(){
     // Generate Start Event
-    I2C1CONbits.RSEN = 1;
+    //I2C1CONbits.RSEN = 1;
+    SSP1CON2bits.RSEN = 1;
     // wait here till SEN = 0 <- Start event competed
-    while(I2C1CONbits.RSEN);
+    //while(I2C1CONbits.RSEN);
+    while(SSP1CON2bits.RSEN);
 }
 
 // Acknowledge Insert
 void I2C1_Ack(){
     // Generate Start Event
-    I2C1CONbits.ACKDT = 0;
-    I2C1CONbits.ACKEN = 1;
-    while(I2C1CONbits.ACKEN);
+    //I2C1CONbits.ACKDT = 0;
+    SSP1CON2bits.ACKDT = 0;
+    //I2C1CONbits.ACKEN = 1;
+    SSP1CON2bits.ACKEN = 1;
+    //while(I2C1CONbits.ACKEN);
+    while(SSP1CON2bits.ACKEN);
 }
 
 // NotAcknowledge Insert
 void I2C1_NAck(){
     // Generate Start Event
-    I2C1CONbits.ACKDT = 1;
-    I2C1CONbits.ACKEN = 1;
-    while(I2C1CONbits.ACKEN);
+    //C1CONbits.ACKDT = 1;
+    SSP1CON2bits.ACKDT = 1;    
+    //C1CONbits.ACKEN = 1;
+    SSP1CON2bits.ACKEN = 1;    
+    //while(I2C1CONbits.ACKEN);
+    while(SSP1CON2bits.ACKEN);
 }
 
 
