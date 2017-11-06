@@ -32,21 +32,27 @@ To accomplish this message, the user software will sequence through the followin
 // Enable I2C Module
 void I2C1_Enable(){
     //I2C1CONbits.I2CEN = 1;
-    SSP1CON1bits.SSP1EN = 1;
+    SSP1CON1bits.SSPEN = 1;
 }
 
 // Disable I2C Module
 void I2C1_Disable(){
     //I2C1CONbits.I2CEN = 0;
-    SSP1CON1bits.SSP1EN = 0;
+    SSP1CON1bits.SSPEN = 0;
 }
 
 
 // 1. transmit in progres; 2. Test SSP1CON2 & 0x1F for zero.
+//In I2 C Master mode:
+//1 = Transmit is in progress
+//0 = Transmit is not in progress
+//OR-ing this bit with SEN, RSEN, PEN, RCEN or ACKEN will indicate if the MSSPx is in Idle mode.
+
 // Check if bus is idle
 void I2C1_Idle(){
     // Wait till bus is idle P = 1
-    while((I2C1CON & 0x001F) || I2C1STATbits.TRSTAT);
+    //while((I2C1CON & 0x001F) || I2C1STATbits.TRSTAT);
+    while((SSP1CON2 & 0x001F) || SSP1STATbits.R_nW);
 }
 
 // Start Event
