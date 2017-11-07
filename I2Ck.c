@@ -9,7 +9,6 @@
 
 #include <xc.h>
 #include "I2Ck.h"
-//#include <libpic30.h>
 
 #define SLAVE_ADDRESS   0x50
 
@@ -32,59 +31,81 @@ To accomplish this message, the user software will sequence through the followin
 
 // Enable I2C Module
 void I2C1_Enable(){
-    I2C1CONbits.I2CEN = 1;
+    //I2C1CONbits.I2CEN = 1;
+    SSP1CON1bits.SSPEN = 1;
 }
 
 // Disable I2C Module
 void I2C1_Disable(){
-    I2C1CONbits.I2CEN = 0;
+    //I2C1CONbits.I2CEN = 0;
+    SSP1CON1bits.SSPEN = 0;
 }
+
+
+// 1. transmit in progres; 2. Test SSP1CON2 & 0x1F for zero.
+//In I2 C Master mode:
+//1 = Transmit is in progress
+//0 = Transmit is not in progress
+//OR-ing this bit with SEN, RSEN, PEN, RCEN or ACKEN will indicate if the MSSPx is in Idle mode.
 
 // Check if bus is idle
 void I2C1_Idle(){
     // Wait till bus is idle P = 1
-    while((I2C1CON & 0x001F) || I2C1STATbits.TRSTAT);
+    //while((I2C1CON & 0x001F) || I2C1STATbits.TRSTAT);
+    while((SSP1CON2 & 0x001F) || SSP1STATbits.R_nW);
 }
 
 // Start Event
 void I2C1_Start(){
     // Generate Start Event
-    I2C1CONbits.SEN = 1;
+    //I2C1CONbits.SEN = 1;
+    SSP1CON2bits.SEN = 1;
     // wait here till SEN = 0 <- Start event competed
-    while(I2C1CONbits.SEN);
+    //while(I2C1CONbits.SEN);
+    while(SSP1CON2bits.SEN);
 }
 
 // Stop Event
 void I2C1_Stop(){
     // Generate Start Event
-    I2C1CONbits.PEN = 1;
+    //I2C1CONbits.PEN = 1;
+    SSP1CON2bits.PEN = 1;
     // wait here till SEN = 0 <- Start event competed
-    while(I2C1CONbits.PEN);
+    //while(I2C1CONbits.PEN);
+    while(SSP1CON2bits.PEN);
     //__delay_us(150);
 }
 
 // Restart Event
 void I2C1_Restart(){
     // Generate Start Event
-    I2C1CONbits.RSEN = 1;
+    //I2C1CONbits.RSEN = 1;
+    SSP1CON2bits.RSEN = 1;
     // wait here till SEN = 0 <- Start event competed
-    while(I2C1CONbits.RSEN);
+    //while(I2C1CONbits.RSEN);
+    while(SSP1CON2bits.RSEN);
 }
 
 // Acknowledge Insert
 void I2C1_Ack(){
     // Generate Start Event
-    I2C1CONbits.ACKDT = 0;
-    I2C1CONbits.ACKEN = 1;
-    while(I2C1CONbits.ACKEN);
+    //I2C1CONbits.ACKDT = 0;
+    SSP1CON2bits.ACKDT = 0;
+    //I2C1CONbits.ACKEN = 1;
+    SSP1CON2bits.ACKEN = 1;
+    //while(I2C1CONbits.ACKEN);
+    while(SSP1CON2bits.ACKEN);
 }
 
 // NotAcknowledge Insert
 void I2C1_NAck(){
     // Generate Start Event
-    I2C1CONbits.ACKDT = 1;
-    I2C1CONbits.ACKEN = 1;
-    while(I2C1CONbits.ACKEN);
+    //C1CONbits.ACKDT = 1;
+    SSP1CON2bits.ACKDT = 1;    
+    //C1CONbits.ACKEN = 1;
+    SSP1CON2bits.ACKEN = 1;    
+    //while(I2C1CONbits.ACKEN);
+    while(SSP1CON2bits.ACKEN);
 }
 
 
@@ -92,20 +113,26 @@ void I2C1_NAck(){
 // Send Data
 void I2C1_Send(unsigned char data){
     // To send byte out data needs to be copied to Transmit register
-    IFS1bits.MI2C1IF = 0;
-    I2C1TRN = data;
-    while(I2C1STATbits.TBF);
-    while(IFS1bits.MI2C1IF);    //Wait for ninth clock cycle
-    IFS1bits.MI2C1IF = 0;        //Clear interrupt flag
-    while(I2C1STATbits.ACKSTAT);
+    //IFS1bits.MI2C1IF = 0;
+    PIR1bits.SSP1IF = 0;
+    //I2C1TRN = data;
+    SSP1BUF = data;
+    //while(I2C1STATbits.TBF);
+    while(SSP1STATbits.BF);
+    //while(IFS1bits.MI2C1IF);    //Wait for ninth clock cycle
+    while(!PIR1bits.SSP1IF);
+    //IFS1bits.MI2C1IF = 0;        //Clear interrupt flag
+    PIR1bits.SSP1IF = 0;
+    //while(I2C1STATbits.ACKSTAT);
+    
 }
 
 // Receive Data
 unsigned char I2C1_Receive(){
     char result;
-    I2C1CONbits.RCEN = 1;
-    while(I2C1CONbits.RCEN);
-    return result = I2C1RCV;
+    SSP1CON2bits.RCEN = 1;
+    while(SSP1CON2bits.RCEN);
+    return result = SSP1BUF;
 }
 
 // Write Complete check
@@ -116,12 +143,12 @@ void I2C1_WriteCmpt(unsigned char sAddress){
         I2C1_Start();
         
         // To send byte out data needs to be copied to Transmit register
-        IFS1bits.MI2C1IF = 0;
-        I2C1TRN = sAddress << 1;
-        while(I2C1STATbits.TBF);
-        while(IFS1bits.MI2C1IF);    //Wait for ninth clock cycle
-        IFS1bits.MI2C1IF = 0;        //Clear interrupt flag
-        while(I2C1STATbits.ACKSTAT){
+        PIR1bits.SSP1IF = 0;
+        SSP1BUF = sAddress << 1;
+        while(SSP1STATbits.BF);
+        while(PIR1bits.SSP1IF);    //Wait for ninth clock cycle
+        PIR1bits.SSP1IF = 0;        //Clear interrupt flag
+        while(SSP1CON2bits.ACKSTAT){
             LATB++;
             if(LATB == 0x70){
                 LATB = 0x00;
@@ -130,7 +157,7 @@ void I2C1_WriteCmpt(unsigned char sAddress){
         }
         I2C1_Idle();
         I2C1_Stop();
-        if(I2C1STATbits.ACKSTAT == 0){
+        if(SSP1CON2bits.ACKSTAT == 0){
             I2C1_Idle();
             I2C1_Stop();
             break;
